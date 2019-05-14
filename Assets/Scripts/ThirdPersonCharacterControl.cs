@@ -4,19 +4,20 @@ using UnityEngine;
 
 public class ThirdPersonCharacterControl : MonoBehaviour
 {
-    public Transform cameraTransform;
-
     public float ROTATION_TIME = 0.15f;
     public float RUNNING_SPEED = 5f;
+    public float MAX_TILT_DEGREE = 7.5f;
 
-    private Transform characterTransform;
-    private Animator anim;
+    public Transform cameraTransform;
+    public Transform characterTransform;
+    public Animator anim;
+
+    private Transform unityChanCameraTrackerObjectTransform;
 
     // Start is called before the first frame update
     void Start()
     {
-        characterTransform = transform;
-        anim = GetComponent<Animator>();
+        unityChanCameraTrackerObjectTransform = transform;
     }
 
     void FixedUpdate()
@@ -33,8 +34,11 @@ public class ThirdPersonCharacterControl : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
         Vector2 inputDir = new Vector2(h, v);
-        if(inputDir.magnitude == 0)
+        Quaternion targetRotationQuarternion;
+        if (inputDir.magnitude == 0)
         {
+            targetRotationQuarternion = Quaternion.Euler(characterTransform.eulerAngles.x, characterTransform.eulerAngles.y, 0);
+            characterTransform.rotation = Quaternion.Lerp(characterTransform.rotation, targetRotationQuarternion, Time.fixedDeltaTime / ROTATION_TIME);
             return;
         }
 
@@ -42,15 +46,19 @@ public class ThirdPersonCharacterControl : MonoBehaviour
         anim.SetFloat("Speed", inputMagnitude);
         anim.SetFloat("Direction", Mathf.Sin(Vector3.Angle(Vector3.zero, inputDir) * Mathf.Deg2Rad));
 
-        //Rotation
+        //CharacterRotation
         float cameraAngleDiffWithInput = Mathf.Acos(Vector2.Dot(new Vector2(0, 1), inputDir) / inputDir.magnitude) * Mathf.Rad2Deg; //Vector(0, 1) represents camera direction
-        float targetRotationDegree = cameraTransform.eulerAngles.y + (h > 0 ? cameraAngleDiffWithInput : -cameraAngleDiffWithInput);
-        Quaternion targetRotationQuarternion = Quaternion.Euler(0, characterTransform.rotation.y + targetRotationDegree, 0);
+        float targetRotationYDegree = cameraTransform.eulerAngles.y + (h > 0 ? cameraAngleDiffWithInput : -cameraAngleDiffWithInput);
+        float targetRotationZDegree = Mathf.Clamp(MAX_TILT_DEGREE * Mathf.Abs(characterTransform.eulerAngles.y - targetRotationYDegree) / 180f, 1, MAX_TILT_DEGREE);
+        targetRotationQuarternion = Quaternion.Euler(0, characterTransform.rotation.y + targetRotationYDegree, (h > 0 ? -targetRotationZDegree : targetRotationZDegree) );
         characterTransform.rotation = Quaternion.Lerp(characterTransform.rotation, targetRotationQuarternion, Time.fixedDeltaTime / ROTATION_TIME);
 
-        //Movement
         Vector3 velocity = new Vector3(0, 0, inputMagnitude);
-        velocity = transform.TransformDirection(velocity);
-        transform.localPosition += velocity * RUNNING_SPEED * Time.fixedDeltaTime;
+        velocity = characterTransform.TransformDirection(velocity);
+        //CharacterMovement
+        //characterTransform.localPosition += velocity * RUNNING_SPEED * Time.fixedDeltaTime;
+
+        //Parent Object Movement (be tracked by cinemachine)
+        unityChanCameraTrackerObjectTransform.localPosition += velocity * RUNNING_SPEED * Time.fixedDeltaTime;
     }
 }
