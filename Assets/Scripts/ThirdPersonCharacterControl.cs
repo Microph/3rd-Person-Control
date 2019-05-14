@@ -6,14 +6,17 @@ public class ThirdPersonCharacterControl : MonoBehaviour
 {
     public Transform cameraTransform;
 
-    public float ROTATION_TIME = 0.3f;
+    public float ROTATION_TIME = 0.15f;
+    public float RUNNING_SPEED = 5f;
 
     private Transform characterTransform;
+    private Animator anim;
 
     // Start is called before the first frame update
     void Start()
     {
         characterTransform = transform;
+        anim = GetComponent<Animator>();
     }
 
     void FixedUpdate()
@@ -30,15 +33,24 @@ public class ThirdPersonCharacterControl : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
         Vector2 inputDir = new Vector2(h, v);
-        //Debug.Log("input dir: " + inputDir);
         if(inputDir.magnitude == 0)
         {
             return;
         }
 
-        float cameraAngleDiffWithInput = Mathf.Acos(Vector2.Dot(new Vector2(0, 1), inputDir) / inputDir.magnitude) * Mathf.Rad2Deg;
+        float inputMagnitude = Mathf.Clamp(inputDir.magnitude, 0, 1);
+        anim.SetFloat("Speed", inputMagnitude);
+        anim.SetFloat("Direction", Mathf.Sin(Vector3.Angle(Vector3.zero, inputDir) * Mathf.Deg2Rad));
+
+        //Rotation
+        float cameraAngleDiffWithInput = Mathf.Acos(Vector2.Dot(new Vector2(0, 1), inputDir) / inputDir.magnitude) * Mathf.Rad2Deg; //Vector(0, 1) represents camera direction
         float targetRotationDegree = cameraTransform.eulerAngles.y + (h > 0 ? cameraAngleDiffWithInput : -cameraAngleDiffWithInput);
         Quaternion targetRotationQuarternion = Quaternion.Euler(0, characterTransform.rotation.y + targetRotationDegree, 0);
         characterTransform.rotation = Quaternion.Lerp(characterTransform.rotation, targetRotationQuarternion, Time.fixedDeltaTime / ROTATION_TIME);
+
+        //Movement
+        Vector3 velocity = new Vector3(0, 0, inputMagnitude);
+        velocity = transform.TransformDirection(velocity);
+        transform.localPosition += velocity * RUNNING_SPEED * Time.fixedDeltaTime;
     }
 }
