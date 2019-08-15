@@ -46,11 +46,11 @@ public class ThirdPersonCharacterControl : MonoBehaviour
         anim.SetFloat("Speed", inputMagnitude);
         anim.SetFloat("Direction", Mathf.Sin(Vector3.Angle(Vector3.zero, inputDir) * Mathf.Deg2Rad));
 
-        //CharacterRotation
-        float cameraAngleDiffWithInput = Mathf.Acos(Vector2.Dot(new Vector2(0, 1), inputDir) / inputDir.magnitude) * Mathf.Rad2Deg; //Vector(0, 1) represents camera direction
+        //Vector(0, 1) represents camera direction
+        float cameraAngleDiffWithInput = Vector3.Angle(new Vector2(0, 1), inputDir); //Mathf.Acos(Vector2.Dot(new Vector2(0, 1), inputDir) / inputDir.magnitude) * Mathf.Rad2Deg;
         float targetRotationYDegree = cameraTransform.eulerAngles.y + (h > 0 ? cameraAngleDiffWithInput : -cameraAngleDiffWithInput);
         float targetRotationZDegree = Mathf.Clamp(MAX_TILT_DEGREE * Mathf.Abs(characterTransform.eulerAngles.y - targetRotationYDegree) / 180f, 1, MAX_TILT_DEGREE);
-        targetRotationQuarternion = Quaternion.Euler(0, characterTransform.rotation.y + targetRotationYDegree, (h > 0 ? -targetRotationZDegree : targetRotationZDegree) );
+        targetRotationQuarternion = Quaternion.Euler(0, characterTransform.rotation.y + targetRotationYDegree, /*TODO*/ );
         characterTransform.rotation = Quaternion.Lerp(characterTransform.rotation, targetRotationQuarternion, Time.fixedDeltaTime / ROTATION_TIME);
 
         Vector3 velocity = new Vector3(0, 0, inputMagnitude);
