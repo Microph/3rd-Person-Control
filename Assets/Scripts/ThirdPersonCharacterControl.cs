@@ -49,8 +49,8 @@ public class ThirdPersonCharacterControl : MonoBehaviour
         //Vector(0, 1) represents camera direction
         float cameraAngleDiffWithInput = Vector3.Angle(new Vector2(0, 1), inputDir); //Mathf.Acos(Vector2.Dot(new Vector2(0, 1), inputDir) / inputDir.magnitude) * Mathf.Rad2Deg;
         float targetRotationYDegree = cameraTransform.eulerAngles.y + (h > 0 ? cameraAngleDiffWithInput : -cameraAngleDiffWithInput);
-        float targetRotationZDegree = Mathf.Clamp(MAX_TILT_DEGREE * Mathf.Abs(characterTransform.eulerAngles.y - targetRotationYDegree) / 180f, 1, MAX_TILT_DEGREE);
-        targetRotationQuarternion = Quaternion.Euler(0, characterTransform.rotation.y + targetRotationYDegree, /*TODO*/ );
+        float targetRotationZDegree = Mathf.Clamp(characterTransform.eulerAngles.y - targetRotationYDegree, -MAX_TILT_DEGREE, MAX_TILT_DEGREE); //For tilting when sharp turn
+        targetRotationQuarternion = Quaternion.Euler(0, characterTransform.rotation.y + targetRotationYDegree, characterTransform.rotation.z + targetRotationZDegree);
         characterTransform.rotation = Quaternion.Lerp(characterTransform.rotation, targetRotationQuarternion, Time.fixedDeltaTime / ROTATION_TIME);
 
         Vector3 velocity = new Vector3(0, 0, inputMagnitude);
